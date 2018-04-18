@@ -10,41 +10,47 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
 #include "argparse/argparse.h"
+#include "matcher/flags.h"
+#include "matcher/regex.h"
 
-static const char *const help_str = "-h";
+
+
+#define PATH_MAX_CHAR			256u
+#define REGEX_MAX_CHAR			256u
+
 static const char *const usage[] = {
     "test_argparse [options] [[--] args]",
     "test_argparse [options]",
     NULL,
 };
 
-#define PERM_READ  (1<<0)
-#define PERM_WRITE (1<<1)
-#define PERM_EXEC  (1<<2)
-
 int main(int argc, const char **argv) {
-    int force = 0;
-    int test = 0;
-    int num = 0;
-    const char *path = NULL;
-    int perms = 0;
+    char path[PATH_MAX_CHAR];
+    char regex[REGEX_MAX_CHAR];
+    memset(path,0,PATH_MAX_CHAR);
+    memset(regex,0,REGEX_MAX_CHAR);
+    int flags = 0;
+    MATCHER m;
+    REGEX_OPT opts;
+    MATCHER_ERR err;
+    MATCHER_RESULT res;
+    FILE* fp = NULL;
+
     struct argparse_option options[] = {
         OPT_HELP(),
         OPT_GROUP("Basic options"),
-        OPT_STRING('p', "path", &path, "file to match"),
-        OPT_BOOLEAN('f', "force", &force, "force to do"),
-        OPT_BOOLEAN('t', "test", &test, "test only"),
-        OPT_INTEGER('n', "num", &num, "selected num"),
-        OPT_GROUP("Bits options"),
-        OPT_BIT(0, "read", &perms, "read perm", NULL, PERM_READ, OPT_NONEG),
-        OPT_BIT(0, "write", &perms, "write perm", NULL, PERM_WRITE),
-        OPT_BIT(0, "exec", &perms, "exec perm", NULL, PERM_EXEC),
+        OPT_STRING('p', "path", &path, "file to match. if empty, will match against stdin"),
+		OPT_STRING('r', "regex", &regex, "regex to match against"),
+        OPT_GROUP("Flag options"),
+		OPT_BIT('v', "verbose", &flags, "", NULL, VERBOSE_BIT),
+		OPT_BIT('l', "", &flags, "if a match should output the whole line (until a carriage return)", NULL, OUTPUT_LINE_BIT),
+		OPT_BIT('n', "", &flags, "if a match should output the line number",NULL, OUTPUT_LINE_NUM_BIT),
+        //OPT_BIT(0, "write", &perms, "write perm", NULL, PERM_WRITE),
+        //OPT_BIT(0, "exec", &perms, "exec perm", NULL, PERM_EXEC),
         OPT_END(),
     };
-
-
 
     struct argparse argparse;
     argparse_init(&argparse, options, usage, 0);
@@ -52,28 +58,21 @@ int main(int argc, const char **argv) {
 
     if(argc < 2) {
     	/* No options given */
-    	argparse_usage(&argparse);
-    	return EXIT_FAILURE;
+    	argparse_help_cb(&argparse,NULL);
     }
 
     argc = argparse_parse(&argparse, argc, argv);
-    if (force != 0)
-        printf("force: %d\n", force);
-    if (test != 0)
-        printf("test: %d\n", test);
-    if (path != NULL)
-        printf("path: %s\n", path);
-    if (num != 0)
-        printf("num: %d\n", num);
-    if (argc != 0) {
-        printf("argc: %d\n", argc);
-        int i;
-        for (i = 0; i < argc; i++) {
-            printf("argv[%d]: %s\n", i, *(argv + i));
-        }
-    }
-    if (perms) {
-        printf("perms: %d\n", perms);
-    }
+
+    /* Setup Matcher object*/
+    if (path  != NULL)  fp = fopen(path,"r");
+    if (regex != NULL)  opts.pattern = regex;
+
+    matcher_init(&m, &opts, &err);
+    if(err.code)  printf("Could not initialize matcher, code %u\n", err.code);
+
+    /* Find results */
+    match_against_str(m, "hey what is up my dude\n", &res, &err);
+
+
 	return EXIT_SUCCESS;
 }
