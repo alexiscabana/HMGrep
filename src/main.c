@@ -13,7 +13,7 @@
 #include <string.h>
 #include "argparse/argparse.h"
 #include "matcher/flags.h"
-#include "matcher/regex.h"
+#include "matcher/matcher.h"
 
 
 
@@ -27,16 +27,14 @@ static const char *const usage[] = {
 };
 
 int main(int argc, const char **argv) {
-    char path[PATH_MAX_CHAR];
-    char regex[REGEX_MAX_CHAR];
-    memset(path,0,PATH_MAX_CHAR);
-    memset(regex,0,REGEX_MAX_CHAR);
+	const char *path = NULL;
+	const char *regex = NULL;
+
     int flags = 0;
     MATCHER m;
-    REGEX_OPT opts;
     MATCHER_ERR err;
     MATCHER_RESULT res;
-    FILE* fp = NULL;
+    //FILE* fp = NULL;
 
     struct argparse_option options[] = {
         OPT_HELP(),
@@ -64,11 +62,11 @@ int main(int argc, const char **argv) {
     argc = argparse_parse(&argparse, argc, argv);
 
     /* Setup Matcher object*/
-    if (path  != NULL)  fp = fopen(path,"r");
-    if (regex != NULL)  opts.pattern = regex;
+    //if (path  != NULL)  fp = fopen(path,"r");
+    if (regex != NULL)  { printf("pattern : %s\n",regex); }
 
-    matcher_init(&m, &opts, &err);
-    if(err.code)  printf("Could not initialize matcher, code %u\n", err.code);
+    matcher_init(&m, regex, 0, &err);
+    //if(err.code)  printf("Could not initialize matcher, code %u\n", err.code);
 
     /* Find results */
     match_against_str(m, "hey what is up my dude\n", &res, &err);
