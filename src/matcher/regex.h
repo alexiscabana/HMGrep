@@ -27,9 +27,32 @@
 
 #define PATTERN  							const char *
 #define REGEX_ERR_CODE  					unsigned int
-#define ESCAPE_CHAR							'\\'
-#define OPEN_SINGLE_TOKEN_CHOICES_CHAR		'['
-#define CLOSE_SINGLE_TOKEN_CHOICES_CHAR		']'
+
+#if 0
+#define CHAR_ESCAPE							'\\'
+#define CHAR_OPEN_SINGLE_TOKEN_CHOICES		'['
+#define CHAR_CLOSE_SINGLE_TOKEN_CHOICES		']'
+#define CHAR_RANGE_DELIM					'-'
+#define CHAR_ZERO_OR_ONE					'?'
+#define CHAR_ZERO_OR_MORE					'*'
+#define CHAR_ONE_OR_MORE					'+'
+#define CHAR_OPEN_RANGE_OCCURENCE			'{'
+#define CHAR_CLOSE_RANGE_OCCURENCE			'}'
+#define CHAR_OPEN_GROUP						'('
+#define CHAR_CLOSE_GROUP					')'
+#endif
+
+#define BACKSLASH							'\\'
+#define OPEN_BRACKET						'['
+#define CLOSE_BRACKET						']'
+#define DASH								'-'
+#define INT_MARK							'?'
+#define STAR								'*'
+#define ADD_SIGN							'+'
+#define OPEN_BRACE							'{'
+#define CLOSE_BRACE							'}'
+#define OPEN_PARENTHESE						'('
+#define CLOSE_PARENTHESE					')'
 
 typedef struct regex_opt{
 	const char* pattern;
@@ -96,5 +119,15 @@ void regex_set_err(REGEX_pERR err, REGEX_ERR_CODE code);
 void regex_parse(REGEX_pMACHINE machine, PATTERN pattern, REGEX_pERR err);
 
 REGEX_pSTATE regex_parse_next_token(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err);
+
+REGEX_CONDITION regex_get_quantifier_condition(PATTERN pattern, size_t* i);
+
+
+/* Character handlers */
+REGEX_pSTATE regex_handle_char(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err);
+
+REGEX_pSTATE regex_handle_escaped_char(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err);
+
+REGEX_pSTATE regex_handle_brackets(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err);
 
 #endif /* SRC_MATCHER_REGEX_H_ */

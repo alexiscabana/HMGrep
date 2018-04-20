@@ -95,11 +95,63 @@ void regex_set_err(REGEX_pERR err, REGEX_ERR_CODE code){
 REGEX_pSTATE regex_parse_next_token(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err){
 	char cur;
 	REGEX_pSTATE newtail;
-	REGEX_pEDGE edge;
 
 	cur = pattern[*i];
-	/* TODO pretty much everything goes here*/
+
+	/* Separate cases */
+	if(isalpha(cur))
+		newtail = regex_handle_char(machine, append_to, pattern, i, err);
+	else if(cur == BACKSLASH)
+		newtail = regex_handle_escaped_char(machine, append_to, pattern, i, err);
+	else if(cur == OPEN_BRACKET)
+		newtail = regex_handle_brackets(machine, append_to, pattern, i, err);
+
 	return newtail;
 }
 
+REGEX_pSTATE regex_handle_char(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err){
+	REGEX_pEDGE nedge;
+	REGEX_pSTATE nstate;
 
+	nedge  = regex_alloc_edge(machine);
+	nstate = regex_alloc_state(machine);
+
+	nedge->condition = regex_get_quantifier_condition(pattern, i);
+	nedge->to = (struct REGEX_STATE*)nstate;
+
+	append_to->edges    = (REGEX_pEDGE*)nedge;
+	append_to->nb_edges = 1;
+
+	return nstate;
+}
+
+REGEX_pSTATE regex_handle_escaped_char(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err){
+	REGEX_pEDGE edge;
+
+}
+
+REGEX_pSTATE regex_handle_brackets(REGEX_pMACHINE machine, REGEX_pSTATE append_to, PATTERN pattern, size_t* i, REGEX_pERR err){
+
+}
+
+REGEX_CONDITION regex_get_quantifier_condition(PATTERN pattern, size_t* i){
+	REGEX_CONDITION c;
+	char next, current;
+	current = pattern[*(i)];
+	next 	= pattern[*(i)+1];
+
+	c.negated    = REGEX_NO;
+	c.payload[0] = current; //the letter itself
+
+	switch(next) {
+	case('\0'): c.type = SINGLE; break;
+	case(STAR): c.type = ZERO_OR_MORE; break;
+	case(ADD_SIGN): c.type = ONE_OR_MORE; break;
+	case(INT_MARK): c.type = ZERO_OR_ONE; break;
+	case(OPEN_BRACE):
+		/* Get ranged quantifier*/
+				//TODO
+	default: c.type = SINGLE; break;
+	}
+	return c;
+}
